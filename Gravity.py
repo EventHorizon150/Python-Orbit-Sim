@@ -14,7 +14,7 @@ pygame.init()
 root = Tk()
 root.title("Orbit Preset")
 
-displayInfo = [] # stores what should be drawn (vectors, gravity forces, etc.)
+displayInfo = [False, False, False, False, False] # stores what should be drawn (vectors, gravity forces, etc.)
 
 def enter():
 	global displayInfo
@@ -46,17 +46,13 @@ enter_button.grid(row = 5, column = 0)
 
 root.mainloop()
 
-# what happens if the window was exited without pressing 'enter'
-# the list 'displayInfo' would be empty if this happened
-displayInfo = [False, False, False, False] if displayInfo == [] else displayInfo
-
 # variables
 screenWidth = 800
 screenHeight = 800
 
 clock = pygame.time.Clock()
 
-fps = 30
+fps = 60
 frame_count = 0
 
 game_font  = pygame.font.SysFont('calibri', 40, bold = True)
@@ -71,6 +67,8 @@ rightArrowUp = True
 camera_speed = 12
 
 SQRT2_RECIP = 1/math.sqrt(2)
+
+baseDegreeOfMagnitude = 24
 
 WHITE = pygame.Color(255, 255, 255) 
 
@@ -90,24 +88,23 @@ def generateRandomBodies(numBodies, massRange):
 		released = True,\
 		fixed = False) for _ in range(numBodies)]
 
-bodies = generateRandomBodies(250, (20_000, 50_000))
+# bodies = generateRandomBodies(120, (8*10**22, 4*10**23))
 
 # # oscellation							
-# oscMass = 500
+# oscMass = 500 * 10**24
 # bodies = [Body((200, 400), [0, 0], oscMass, screen, released=True, fixed=True), \
-# Body((600, 400), [0, 0], oscMass, screen, released=True, fixed=True), \
-# Body((400, 100), [0, 0], 30, screen, released = True)]
+# Body((600, 400), [0, 0], oscMass + 1*10**20, screen, released=True, fixed=True), \
+# Body((400, 100), [0, 0], 3 * 10**22, screen, released = True)]
 
-# # circular orbit
-# dist = 200
-# mass1, mass2 = 8100, 100
-# magnitude2 = math.sqrt((Body.G*mass1)/dist)*mass2
-# print(magnitude2)
-# pos1 = (400, 400)
-# pos2 = (pos1[0]+dist, pos1[1])
-# angle2 = Body.findRadianAngleFromCoords(pos1, pos2) + math.pi/2
-# bodies = [Body((400, 400), [0, 0], mass1, screen, released=True, fixed=True), \
-# Body((400+dist, 400), Body.findVectorFromMagnitudeAndAngle(magnitude2, angle2), mass2, screen, released = True, fixed = False)]
+# circular orbit (Earth and moon)
+dist = 384.4
+mass1, mass2 = 5.972*10**24, 7.3477*10**22
+magnitude2 = math.sqrt((Body.G*(mass1+mass2))/(dist*Body.mpp))*mass2
+pos1 = (400, 400)
+pos2 = (pos1[0]+dist, pos1[1])
+angle2 = Body.findRadianAngleFromCoords(pos1, pos2) + math.pi/2
+bodies = [Body((400, 400), [0, 0], mass1, screen, released=True, fixed=True), \
+Body((400+dist, 400), Body.findVectorFromMagnitudeAndAngle(magnitude2, angle2), mass2, screen, released = True, fixed = False)]
 
 initialState = [ele for ele in bodies]
 
@@ -116,10 +113,14 @@ pygame.K_8, pygame.K_9] # needs to be in order
 prospectiveMass = 0
 typedNum = ""
 
-leftClickBodyMass = 500_000
-rightClickBodyMass = 7_500_000
+leftClickBodyMass = 6*10**24
+rightClickBodyMass = 6*10**25
 
-launch_line_length_scaler = 7.5
+launch_line_length = 300 # pixels
+launch_line_length_scaler = 300/Body.max_speed
+# stored so that the line can be rendered after the ball is drawn, but calculated beforehand 
+launch_line_info  = [] # color, start, end
+launch_line_width = 5
 
 def generateNewBody(pos, mass):
 	return Body(pos, [0, 0], mass, screen)
@@ -153,6 +154,9 @@ while not game_over:
 
 	# drawing the background
 	screen.fill(background_color)
+
+	if len(bodies) > 0:
+		print(bodies[-1].findVelocity())
 
 	# exiting the game if escape is pressed
 	if pressed[pygame.K_ESCAPE]:
@@ -228,19 +232,20 @@ while not game_over:
 		# 'and not typedNum == ""' is necessary because the enter press could be registered multiple times,
 		# and "" cannot be parsed as an 'int'
 		if pressed[pygame.K_RETURN] and not typedNum == "":
-			newMass = int(typedNum)
+			print(typedNum)
+			newMass = int(typedNum)*10**baseDegreeOfMagnitude
 			typedNum = ""
 		# setting the new mass
 		if newMass != heldBody.mass:
 			prospectiveMass = newMass
 			heldBody.setMass(newMass)
 		# displaying the mass of the held body
-		mass_label_text = "Mass: {}".format(prospectiveMass)
+		mass_label_text = "Mass: {} * 10^{}".format(prospectiveMass/(10**math.floor(math.log(prospectiveMass, 10))), math.floor(math.log(prospectiveMass, 10)))
 		mass_label = game_font.render(mass_label_text, 1, WHITE)
 		screen.blit(mass_label, mass_text_location)
 		# displaying number that is currently being typed ('typedNum')
 		if not typedNum == "":
-			typedNum_label_text = "Typed: {}".format(typedNum)
+			typedNum_label_text = "Typed: {} * 10^{}".format(typedNum, baseDegreeOfMagnitude)
 			typedNum_label = game_font.render(typedNum_label_text, 1, WHITE)
 			screen.blit(typedNum_label, typedNum_text_location)
 
@@ -248,7 +253,7 @@ while not game_over:
 		held_loc = pygame.mouse.get_pos()
 		exaggerated_max_speed = Body.max_speed * launch_line_length_scaler
 		# distance from the mouse position to the center of the body
-		held_distance = Body.findDistance(heldBody.pos, held_loc)
+		held_distance = Body.findDisplayDistance(heldBody.pos, held_loc)
 		# Stopping the magnitude indicator thing from exceeding its max length while also maintaing in the angle from the mouse to the center of the circle
 		if held_distance > exaggerated_max_speed:
 			held_radian_angle = Body.findRadianAngleFromCoords(heldBody.pos, held_loc)
@@ -256,9 +261,7 @@ while not game_over:
 			displayed_y = exaggerated_max_speed * math.sin(held_radian_angle) + heldBody.pos[1]
 			held_loc = (displayed_x, displayed_y)
 			held_distance = exaggerated_max_speed
-		# drawing the magnitude indicator line
-		# multiplying Body.max_speed by 7.5 shows how fast a body would travel in 0.25 seconds as opposed to 0.033 seconds, as this is easier to see when dragging the line
-		pygame.draw.line(screen, pygame.Color(255, int(255 - (held_distance / exaggerated_max_speed * 255)), 0), heldBody.pos, held_loc, 5)
+		launch_line_info = [pygame.Color(255, int(255 - (held_distance / exaggerated_max_speed * 255)), 0), heldBody.pos, held_loc]
 
 	if not numberKeyIsPressed(pressed):
 		numKeysUp = True
@@ -267,7 +270,7 @@ while not game_over:
 	if event.type == pygame.MOUSEBUTTONUP and not backUp:
 		heldBody = bodies[-1]
 		# distance from the center of the body to the location that the mouse was released
-		launch_magnitude_raw = Body.findDistance(heldBody.pos, held_loc)
+		launch_magnitude_raw = Body.findPhysicsDistance(heldBody.pos, held_loc)
 		# getting the magnitude of the line
 		launch_magnitude = launch_magnitude_raw / launch_line_length_scaler
 		# getting the angle of the launch
@@ -278,6 +281,7 @@ while not game_over:
 		heldBody.released = True
 		backUp = True
 		typedNum = ""
+		launch_line_info = []
 
 	# tab button is not pressed, pause the game
 	# if the right arrow is tapped while paused, advance one frame
@@ -298,6 +302,11 @@ while not game_over:
 	# drawing the balls
 	for b in bodies:
 		b.draw(drawVec = displayInfo[0], drawGrav = displayInfo[1], drawAgg = displayInfo[2], drawTrail = displayInfo[3])	
+
+	# drawing the magnitude indicator line
+	# multiplying Body.max_speed by 7.5 shows how fast a body would travel in 0.25 seconds as opposed to 0.033 seconds, as this is easier to see when dragging the line
+	if not backUp:
+		pygame.draw.line(screen, launch_line_info[0], launch_line_info[1], launch_line_info[2], launch_line_width)
 
 	frame_label_text = "Frame: {}".format(frame_count)
 	frame_label = game_font.render(frame_label_text, 1, WHITE)
