@@ -10,7 +10,7 @@ pygame.init()
 
 # Body class
 class Body:
-	max_speed = 32 # max initial speed
+	max_speed = 0.01 # max initial speed (pixels/second)
 
 	color = (220, 220, 220)
 	vecColor = (255, 0, 0)
@@ -25,13 +25,13 @@ class Body:
 	# 0 means that it needs to be submerged up to its center before it collides
 	collisionDistanceFactor = 0.6
 	# How many times longer the displayed vector is than the distance they will travel in the next frame
-	vectorDisplayFactor = 3
+	vectorDisplayFactor = 10000
 	# What portion of the real magnitude of the gravity vectors are displayed
-	gravDisplayFactor = 0.001
-
-	density = 1000 # kg/m^3
-	# the real gravitational constant, 6.67408 * 10^-11, is not used.
-	G = 6.67408 * 10**-4 # gravitational constant * 10^7
+	gravDisplayFactor = 1*10**-15
+	density = 5000 # kg/m^3
+	G = 6.67408 * 10**-11 # gravitational constant
+	mpp = 1_000_000 # meters per pixel (1000 km)
+	spf = 1200 # seconds per frame (20 min)
 
 	# self, position of the center (x, y), vector, mass, surface
 	# released stores whether the body has been launched
@@ -51,11 +51,15 @@ class Body:
 
 	# Finds the volume of the body (sphere)
 	def findVolume(self):
-		return (4*math.pi*self.rad**3)/3
+		return (4*math.pi*self.findPhysicsRad()**3)/3
+
+	# Finds the radius that is used for physics calculations
+	def findPhysicsRad(self):
+		return self.displayRad * Body.mpp
 
 	# sets a body's radius
-	def setRadius(self, newRad):
-		self.rad = newRad
+	def setDisplayRadius(self, newRad):
+		self.displayRad = newRad
 		self.mass = self.findVolume()*Body.density
 		return self
 
@@ -63,7 +67,7 @@ class Body:
 	def setMass(self, newMass):
 		self.mass = newMass
 		newVolume = self.mass/Body.density
-		self.rad = (3*newVolume/(4*math.pi))**(1/3)
+		self.displayRad = ((3*newVolume/(4*math.pi))**(1/3))/self.mpp
 		return self
 
 	# Returns the body's magnitude
@@ -78,7 +82,8 @@ class Body:
 		self.trailList.append(self.pos)
 		# adjusting the position
 		if not self.fixed:
-			self.pos = [self.pos[0] + self.vec[0]/self.mass, self.pos[1] + self.vec[1]/self.mass]
+			self.pos = [self.pos[0] + self.vec[0]/Body.mpp/self.mass*Body.spf, self.pos[1] + \
+			self.vec[1]/Body.mpp/self.mass*Body.spf]
 		else:
 			self.vec = [0, 0]	
 		return self
@@ -93,13 +98,17 @@ class Body:
 
 	# Distance formula
 	@staticmethod
-	def findDistance(pos1, pos2):
+	def findDisplayDistance(pos1, pos2):
 		return math.sqrt((pos2[0] - pos1[0])**2 + (pos2[1] - pos1[1])**2)
+
+	@staticmethod
+	def findPhysicsDistance(pos1, pos2):
+		return Body.findDisplayDistance(pos1, pos2)*Body.mpp
 
 	# Determines whether the two given bodies are colliding
 	@staticmethod
 	def bodiesAreColliding(body1, body2):
-		distanceBetweenCenters = Body.findDistance(body1.pos, body2.pos)
+		distanceBetweenCenters = Body.findDisplayDistance(body1.pos, body2.pos)
 		# returns true if the distance between their center is less than or equal two the sum of their radii
 		return distanceBetweenCenters <= body2.mass + body2.mass
 
@@ -118,12 +127,55 @@ class Body:
 	# Finds the force (magnitude) of gravitational attraction between two bodies (yes I know gravity isn't a force)
 	@staticmethod
 	def findGravitationalAttraction(body1, body2):
-		return (Body.G * body1.mass * body2.mass)/(Body.findDistance(body1.pos, body2.pos)**2)
+		return (Body.G * body1.mass * body2.mass)/(Body.findPhysicsDistance(body1.pos, body2.pos)**2)*Body.spf
 
 	# Adds two vectors
 	@staticmethod
 	def addVectors(vec1, vec2):
 		return [vec1[0]+vec2[0], vec1[1]+vec2[1]]
+
+	# # returns the x value of the point of intersection of two lines given by two sets of two points.
+	# @staticmethod
+	# def findIntersect(points_a1, points_a2, points_b1, points_b2):
+	# 	xa1, xa2, ya1, ya2 = points_a1[0], points_a2[0], points_a1[1], points_a2[1]
+	# 	xb1, xb2, yb1, yb2 = points_b1[0], points_b2[0], points_b1[1], points_b2[1]
+	# 	if not xa1 == xa2 and not xb1 == xb2:
+	# 		m_a, m_b = (ya1-ya2)/(xa1-xa2), (yb1-yb2)/(xb1-xb2)
+	# 	else:
+	# 		return None, None
+	# 	if m_a == m_b:
+	# 		return None, None
+	# 	b_a, b_b = -1*m_a*xa1+ya1, -1*m_b*xb1+yb1
+	# 	x = (b_a-b_b)/(m_b-m_a)
+	# 	return x, m_a*x+b_a
+
+	# # returns whether two segments intersect
+	# @staticmethod
+	# def segmentsIntersect(points_a1, points_a2, points_b1, points_b2):
+	#    x, y = Body.findIntersect(points_a1, points_a2, points_b1, points_b2)
+	#    if x is None:
+	#       return False
+	#    within_domain_a = x >= min(points_a1[0], points_a2[0]) and x <= max(points_a1[0], points_a2[0])
+	#    within_domain_b = x >= min(points_b1[0], points_b2[0]) and x <= max(points_b1[0], points_b2[0])
+	#    return within_domain_a and within_domain_b
+
+	# @staticmethod
+	# def collisionApproximationLinesAreIntersecting(body1, body2, screen):
+	# 	body1_nextFrame = [body1.pos[0] + body1.vec[0]/Body.mpp/body1.mass*Body.spf, body1.pos[1] + body1.vec[1]/Body.mpp/body1.mass*Body.spf]
+	# 	body2_nextFrame = [body2.pos[0] + body2.vec[0]/Body.mpp/body2.mass*Body.spf, body2.pos[1] + body2.vec[1]/Body.mpp/body2.mass*Body.spf]
+	# 	body1To2Angle = Body.findRadianAngleFromCoords(body1.pos, body2.pos)
+	# 	body1To2Angle_nextFrame = Body.findRadianAngleFromCoords(body1_nextFrame, body2_nextFrame)
+	# 	xDiff, yDiff = math.cos(body1To2Angle), math.sin(body1To2Angle)
+	# 	body1NearestPointToBody2 = [body1.pos[0] + body1.displayRad*xDiff, body1.pos[1] + body1.displayRad*yDiff]
+	# 	body2NearestPointToBody1 = [body2.pos[0] - body2.displayRad*xDiff, body2.pos[1] - body2.displayRad*yDiff] # cos(x + pi) == -cos(x)
+	# 	xDiff_nextFrame, yDiff_nextFrame = math.cos(body1To2Angle_nextFrame), math.sin(body1To2Angle_nextFrame)
+	# 	body1NearestPointToBody2_nextFrame = [body1_nextFrame[0] + body1.displayRad*xDiff_nextFrame, body1_nextFrame[1] + body1.displayRad*yDiff_nextFrame]
+	# 	body2NearestPointToBody1_nextFrame = [body2_nextFrame[0] - body2.displayRad*xDiff_nextFrame, body2_nextFrame[1] - body2.displayRad*yDiff_nextFrame]
+	# 	print(body1NearestPointToBody2)
+	# 	print(body2NearestPointToBody1)
+	# 	pygame.draw.line(screen, (255, 255, 0), body1NearestPointToBody2, body1NearestPointToBody2_nextFrame)
+	# 	pygame.draw.line(screen, (255, 0, 255), body2NearestPointToBody1, body2NearestPointToBody1_nextFrame)
+	# 	return Body.segmentsIntersect(body1NearestPointToBody2, body1NearestPointToBody2_nextFrame, body2NearestPointToBody1, body2NearestPointToBody1_nextFrame)
 
 	# A function that iterates over a list of bodies and handles collisions between them
 	# returns the new list of bodies (post-collisions)
@@ -134,16 +186,21 @@ class Body:
 		for pair in pairs:
 			body1, body2 = pair[0], pair[1]
 			if body1.released and body2.released:
-				dist = Body.findDistance(body1.pos, body2.pos)
+				dist = Body.findDisplayDistance(body1.pos, body2.pos)
 				# true if body1 is bigger and they are colliding
-				absorb = dist <= body1.rad + body2.rad*Body.collisionDistanceFactor and body1.mass >= body2.mass
+				absorb = dist <= body1.displayRad + body2.displayRad*Body.collisionDistanceFactor and body1.mass >= body2.mass
 				# if body2 is bigger and they are colliding
-				if dist <= body2.rad + body1.rad*0.5 and body2.mass >= body1.mass:
+				if dist <= body2.displayRad + body1.displayRad*0.5 and body2.mass >= body1.mass:
 					absorb = True
 					# swapping them so that body1 refers to the larger
 					temp = body2
 					body2 = body1
 					body1 = temp
+				if(body2.displayRad > body1.displayRad):
+					temp = body2
+					body2 = body1
+					body1 = temp
+				# absorb = Body.collisionApproximationLinesAreIntersecting(body1, body2, body1.srf)
 				if absorb:
 					body1.vec = Body.addVectors(body1.vec, body2.vec)
 					body1.setMass(body1.mass + body2.mass)
@@ -182,27 +239,30 @@ class Body:
 	@staticmethod
 	def drawCenterOfMass(lst, screen):
 		centerOfMassPos, totalMass = Body.findCenterOfMass(lst)
-		centerOfMassRad = (3*(totalMass/Body.density)/(4*math.pi))**(1/3)
+		centerOfMassRad = (3*(totalMass/Body.density)/(4*math.pi))**(1/3)/Body.mpp
 		pygame.draw.circle(screen, Body.centerOfMassColor, centerOfMassPos, centerOfMassRad)
 
 	# Draws the body	
 	def draw(self, drawVec = False, drawGrav = False, drawAgg = False, drawTrail = False):
 		# drawing the body
 		clr = Body.color if not self.fixed else Body.fixedColor
-		pygame.draw.circle(self.srf, clr, self.pos, self.rad)
+		pygame.draw.circle(self.srf, clr, self.pos, self.displayRad)
 		# drawing the vector of the ball
 		if drawVec:
 			pygame.draw.line(self.srf, Body.vecColor, self.pos, \
-				(self.pos[0]+self.vec[0]/self.mass*Body.vectorDisplayFactor, self.pos[1]+self.vec[1]/self.mass*Body.vectorDisplayFactor))
+				[self.pos[0] + self.vec[0]/Body.mpp/self.mass*self.vectorDisplayFactor, \
+				self.pos[1] + self.vec[1]/Body.mpp/self.mass*self.vectorDisplayFactor])
 		# drawing the vectors displaying all gravity effects
 		if drawGrav:
 			for gVec in self.gravVecList:
-				pygame.draw.line(self.srf, Body.gravColor, self.pos, (self.pos[0]+gVec[0]*Body.gravDisplayFactor, self.pos[1]+gVec[1]*Body.gravDisplayFactor))
+				pygame.draw.line(self.srf, Body.gravColor, self.pos, \
+					(self.pos[0]+(gVec[0]/Body.spf/Body.mpp)*Body.gravDisplayFactor, self.pos[1]+(gVec[1]/Body.spf/Body.mpp)*Body.gravDisplayFactor))
 		# drawing aggregate gravitational effect vector
 		if drawAgg and len(self.gravVecList) > 0:
-			sumVec = self.gravVecList[0]
-			if len(self.gravVecList) > 1:
-				for gVec in self.gravVecList[1:]:
+			gVecs = [[gV[0]/Body.spf/Body.mpp, gV[1]/Body.spf/Body.mpp] for gV in self.gravVecList]
+			sumVec = gVecs[0]
+			if len(gVecs) > 1:
+				for gVec in gVecs[1:]:
 					sumVec = Body.addVectors(sumVec, gVec)
 			pygame.draw.line(self.srf, Body.aggGravColor, self.pos, (self.pos[0]+sumVec[0]*Body.gravDisplayFactor, self.pos[1]+sumVec[1]*Body.gravDisplayFactor))
 		# drawing the trail
