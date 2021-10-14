@@ -30,6 +30,7 @@ Linux:
 python3 gravity.py
 ```
 ## Controls
+ * Move camera with WASD. 
  * Press the spacebar to reset to the begining. 
  * Hold tab and use foreward arrow key to go frame by frame. 
  * Click to create a new body.
