@@ -21,6 +21,7 @@ pip3 install -r requirements.txt
 
 ## To run
 Run Gravity.py to start.
+
 Windows: 
 ```
 python gravity.py
