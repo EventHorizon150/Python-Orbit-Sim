@@ -36,3 +36,4 @@ python3 gravity.py
  * Click to create a new body.
  * Click and drag to create a new body with mass. 
  * Click and release while holding shift to create a fixed body. 
+ * Escape key to exit. 
