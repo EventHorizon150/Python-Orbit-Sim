@@ -14,13 +14,25 @@ pygame.init()
 root = Tk()
 root.title("Orbit Preset")
 
+randomNoMomentum_numBodies = 120
 displayInfo = [False, False, False, False, False] # stores what should be drawn (vectors, gravity forces, etc.)
+presetVal = 0
 
 def enter():
 	global displayInfo
+	global presetVal
+	global randomNoMomentum_numBodies
 	displayInfo = [bool(vec_int.get()), bool(grav_int.get()), bool(aggGrav_int.get()), \
 	bool(trail_int.get()), bool(centerOfMass_int.get())]
+	presetVal = preset_int.get()
+	randomNoMomentum_numBodies = numBodies_str.get() if len(numBodies_str.get()) > 0 and \
+		int(numBodies_str.get()) >= 0 else randomNoMomentum_numBodies
 	root.destroy()
+def selectRadio():
+	if preset_int.get() == 1:
+		randomNoMomentum_entry.config(state = 'normal')
+	else:
+		randomNoMomentum_entry.config(state = 'disabled')
 
 vec_int = IntVar()
 grav_int = IntVar()
@@ -28,21 +40,45 @@ aggGrav_int = IntVar()
 trail_int = IntVar()
 centerOfMass_int = IntVar()
 
+preset_int = IntVar()
+numBodies_str = StringVar()
+
 vec_check = Checkbutton(root, text = 'Draw vectors', variable = vec_int)
 grav_check = Checkbutton(root, text = 'Draw gravity', variable = grav_int)
 aggGrav_check = Checkbutton(root, text = 'Draw net grav', variable = aggGrav_int)
 trail_check = Checkbutton(root, text = 'Draw trail', variable = trail_int)
 centerOfMass_check = Checkbutton(root, text = 'Draw center of mass', variable = centerOfMass_int)
 
+none_radio = Radiobutton(root, text = 'None', variable = preset_int, value = 0, command = selectRadio)
+randomNoMomentum_radio = Radiobutton(root, text = 'Random (0 Momentum)', variable = preset_int, value = 1, command = selectRadio)
+circularOrbit_radio = Radiobutton(root, text = 'Circular Orbit', variable = preset_int, value = 2, command = selectRadio)
+oscellation_radio = Radiobutton(root, text = 'Oscellation', variable = preset_int, value = 3, command = selectRadio)
+
+randomNoMomentum_entry = Entry(root, textvariable = numBodies_str, state = 'disabled')
+numBodies_str.set(str(randomNoMomentum_numBodies))
+
+display_label = Label(root, text = 'Display Settings')
+presets_label = Label(root, text = 'Presets')
+
 enter_button = Button(root, text = "Enter", command = enter, padx = 70, pady = 10, borderwidth = 4)
 
-vec_check.grid(row = 0, column = 0, sticky = "W", padx = 40)
-grav_check.grid(row = 1, column = 0, sticky = "W", padx = 40)
-aggGrav_check.grid(row = 2, column = 0, sticky = "W", padx = 40)
-trail_check.grid(row = 3, column = 0, sticky = "W", padx = 40)
-centerOfMass_check.grid(row = 4, column = 0, sticky = "W", padx = 40)
+vec_check.grid(row = 1, column = 0, sticky = "W", padx = 40)
+grav_check.grid(row = 2, column = 0, sticky = "W", padx = 40)
+aggGrav_check.grid(row = 3, column = 0, sticky = "W", padx = 40)
+trail_check.grid(row = 4, column = 0, sticky = "W", padx = 40)
+centerOfMass_check.grid(row = 5, column = 0, sticky = "W", padx = 40)
 
-enter_button.grid(row = 5, column = 0)
+none_radio.grid(row = 1, column = 1, sticky = "W", padx = 40)
+randomNoMomentum_radio.grid(row = 2, column = 1, sticky = "W", padx = 40)
+circularOrbit_radio.grid(row = 4, column = 1, sticky = "W", padx = 40)
+oscellation_radio.grid(row = 5, column = 1, sticky = "W", padx = 40)
+
+randomNoMomentum_entry.grid(row = 3, column = 1)
+
+display_label.grid(row = 0, column = 0)
+presets_label.grid(row = 0, column = 1)
+
+enter_button.grid(row = 6, column = 0, columnspan = 2)
 
 root.mainloop()
 
@@ -88,23 +124,26 @@ def generateRandomBodies(numBodies, massRange):
 		released = True,\
 		fixed = False) for _ in range(numBodies)]
 
-# bodies = generateRandomBodies(120, (8*10**22, 4*10**23))
-
-# # oscellation							
-# oscMass = 500 * 10**24
-# bodies = [Body((200, 400), [0, 0], oscMass, screen, released=True, fixed=True), \
-# Body((600, 400), [0, 0], oscMass + 1*10**20, screen, released=True, fixed=True), \
-# Body((400, 100), [0, 0], 3 * 10**22, screen, released = True)]
-
+# PRESETS
+# random
+if presetVal == 1:
+	bodies = generateRandomBodies(int(randomNoMomentum_numBodies), (8*10**22, 4*10**23))
 # circular orbit (Earth and moon)
-dist = 384.4
-mass1, mass2 = 5.972*10**24, 7.3477*10**22
-magnitude2 = math.sqrt((Body.G*(mass1+mass2))/(dist*Body.mpp))*mass2
-pos1 = (400, 400)
-pos2 = (pos1[0]+dist, pos1[1])
-angle2 = Body.findRadianAngleFromCoords(pos1, pos2) + math.pi/2
-bodies = [Body((400, 400), [0, 0], mass1, screen, released=True, fixed=True), \
-Body((400+dist, 400), Body.findVectorFromMagnitudeAndAngle(magnitude2, angle2), mass2, screen, released = True, fixed = False)]
+elif presetVal == 2:
+	dist = 384.4
+	mass1, mass2 = 5.972*10**24, 7.3477*10**22
+	magnitude2 = math.sqrt((Body.G*(mass1+mass2))/(dist*Body.mpp))*mass2
+	pos1 = (400, 400)
+	pos2 = (pos1[0]+dist, pos1[1])
+	angle2 = Body.findRadianAngleFromCoords(pos1, pos2) + math.pi/2
+	bodies = [Body((400, 400), [0, 0], mass1, screen, released=True, fixed=True), \
+	Body((400+dist, 400), Body.findVectorFromMagnitudeAndAngle(magnitude2, angle2), mass2, screen, released = True, fixed = False)]
+# oscellation
+elif presetVal == 3:						
+	oscMass = 500 * 10**24
+	bodies = [Body((200, 400), [0, 0], oscMass, screen, released=True, fixed=True), \
+	Body((600, 400), [0, 0], oscMass, screen, released=True, fixed=True), \
+	Body((400, 100), [0, 0], 3 * 10**24, screen, released = True)]
 
 initialState = [ele for ele in bodies]
 
@@ -113,7 +152,7 @@ pygame.K_8, pygame.K_9] # needs to be in order
 prospectiveMass = 0
 typedNum = ""
 
-leftClickBodyMass = 6*10**24
+leftClickBodyMass = 6*10**24 # ~Earth's mass
 rightClickBodyMass = 6*10**25
 
 launch_line_length = 300 # pixels
@@ -154,9 +193,6 @@ while not game_over:
 
 	# drawing the background
 	screen.fill(background_color)
-
-	if len(bodies) > 0:
-		print(bodies[-1].findVelocity())
 
 	# exiting the game if escape is pressed
 	if pressed[pygame.K_ESCAPE]:
@@ -240,12 +276,12 @@ while not game_over:
 			prospectiveMass = newMass
 			heldBody.setMass(newMass)
 		# displaying the mass of the held body
-		mass_label_text = "Mass: {} * 10^{}".format(prospectiveMass/(10**math.floor(math.log(prospectiveMass, 10))), math.floor(math.log(prospectiveMass, 10)))
+		mass_label_text = "Mass: {} * 10^{} kg".format(prospectiveMass/(10**math.floor(math.log(prospectiveMass, 10))), math.floor(math.log(prospectiveMass, 10)))
 		mass_label = game_font.render(mass_label_text, 1, WHITE)
 		screen.blit(mass_label, mass_text_location)
 		# displaying number that is currently being typed ('typedNum')
 		if not typedNum == "":
-			typedNum_label_text = "Typed: {} * 10^{}".format(typedNum, baseDegreeOfMagnitude)
+			typedNum_label_text = "Typed: {} * 10^{} kg".format(typedNum, baseDegreeOfMagnitude)
 			typedNum_label = game_font.render(typedNum_label_text, 1, WHITE)
 			screen.blit(typedNum_label, typedNum_text_location)
 
