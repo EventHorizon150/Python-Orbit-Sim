@@ -6,4 +6,12 @@ select what specifically is displayed, and move the camera.
 ## To run
 You need to have Python 3, Tkinter, and Pygame installed. Run Gravity.py to start.
 
+Windows:
+```
+pip install -r requirements.txt
+```
+Linux:
+```
+pip3 install -r requirements.txt
+```
 ## Controls

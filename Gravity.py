@@ -2,10 +2,8 @@
 # 8/22/2021
 
 import pygame
-import sys
 import math
 import random
-import copy
 from tkinter import *
 from Body import Body
 
