@@ -4,6 +4,7 @@
 import pygame
 import sys
 import math
+import numpy as np
 import itertools
 
 pygame.init()
@@ -11,6 +12,7 @@ pygame.init()
 # Body class
 class Body:
 	max_speed = 0.01 # max initial speed (pixels/second)
+	max_trail_length = 75 # if it is -1 then there is no limit
 
 	color = (220, 220, 220)
 	vecColor = (255, 0, 0)
@@ -72,7 +74,7 @@ class Body:
 
 	# Returns the body's magnitude
 	def findMagnitude(self):
-		return math.sqrt(self.vec[0]**2 + self.vec[1]**2)
+		return np.sqrt(self.vec[0]**2 + self.vec[1]**2)
 
 	def findVelocity(self):
 		return self.findMagnitude()/self.mass	
@@ -80,6 +82,8 @@ class Body:
 	# Updates the position of the body, applying intertia
 	def update(self):
 		self.trailList.append(self.pos)
+		if not Body.max_trail_length == -1 and len(self.trailList) > Body.max_trail_length:
+			self.trailList = self.trailList[1:]
 		# adjusting the position
 		if not self.fixed:
 			self.pos = [self.pos[0] + self.vec[0]/Body.mpp/self.mass*Body.spf, self.pos[1] + \
@@ -99,7 +103,7 @@ class Body:
 	# Distance formula
 	@staticmethod
 	def findDisplayDistance(pos1, pos2):
-		return math.sqrt((pos2[0] - pos1[0])**2 + (pos2[1] - pos1[1])**2)
+		return np.sqrt((pos2[0] - pos1[0])**2 + (pos2[1] - pos1[1])**2)
 
 	@staticmethod
 	def findPhysicsDistance(pos1, pos2):
@@ -115,13 +119,13 @@ class Body:
 	# Gets the angle (in radians) from the center of a circle (given in center_coords) to the point given in coords
 	@staticmethod
 	def findRadianAngleFromCoords(center_coords, coords):
-		return math.atan2(coords[1] - center_coords[1], coords[0] - center_coords[0])
+		return np.arctan2(coords[1] - center_coords[1], coords[0] - center_coords[0])
 
 	# Returns a list {dx, dy} for a Body vector based on the magnitude (speed) of the body and the angle that it is going at
 	@staticmethod
 	def findVectorFromMagnitudeAndAngle(magnitude, angle):
 		# defining dx and dy with this new vector angle
-		dx, dy = magnitude * math.cos(angle), magnitude * math.sin(angle)
+		dx, dy = magnitude * np.cos(angle), magnitude * np.sin(angle)
 		return [dx, dy]
 
 	# Finds the force (magnitude) of gravitational attraction between two bodies (yes I know gravity isn't a force)
@@ -133,49 +137,6 @@ class Body:
 	@staticmethod
 	def addVectors(vec1, vec2):
 		return [vec1[0]+vec2[0], vec1[1]+vec2[1]]
-
-	# # returns the x value of the point of intersection of two lines given by two sets of two points.
-	# @staticmethod
-	# def findIntersect(points_a1, points_a2, points_b1, points_b2):
-	# 	xa1, xa2, ya1, ya2 = points_a1[0], points_a2[0], points_a1[1], points_a2[1]
-	# 	xb1, xb2, yb1, yb2 = points_b1[0], points_b2[0], points_b1[1], points_b2[1]
-	# 	if not xa1 == xa2 and not xb1 == xb2:
-	# 		m_a, m_b = (ya1-ya2)/(xa1-xa2), (yb1-yb2)/(xb1-xb2)
-	# 	else:
-	# 		return None, None
-	# 	if m_a == m_b:
-	# 		return None, None
-	# 	b_a, b_b = -1*m_a*xa1+ya1, -1*m_b*xb1+yb1
-	# 	x = (b_a-b_b)/(m_b-m_a)
-	# 	return x, m_a*x+b_a
-
-	# # returns whether two segments intersect
-	# @staticmethod
-	# def segmentsIntersect(points_a1, points_a2, points_b1, points_b2):
-	#    x, y = Body.findIntersect(points_a1, points_a2, points_b1, points_b2)
-	#    if x is None:
-	#       return False
-	#    within_domain_a = x >= min(points_a1[0], points_a2[0]) and x <= max(points_a1[0], points_a2[0])
-	#    within_domain_b = x >= min(points_b1[0], points_b2[0]) and x <= max(points_b1[0], points_b2[0])
-	#    return within_domain_a and within_domain_b
-
-	# @staticmethod
-	# def collisionApproximationLinesAreIntersecting(body1, body2, screen):
-	# 	body1_nextFrame = [body1.pos[0] + body1.vec[0]/Body.mpp/body1.mass*Body.spf, body1.pos[1] + body1.vec[1]/Body.mpp/body1.mass*Body.spf]
-	# 	body2_nextFrame = [body2.pos[0] + body2.vec[0]/Body.mpp/body2.mass*Body.spf, body2.pos[1] + body2.vec[1]/Body.mpp/body2.mass*Body.spf]
-	# 	body1To2Angle = Body.findRadianAngleFromCoords(body1.pos, body2.pos)
-	# 	body1To2Angle_nextFrame = Body.findRadianAngleFromCoords(body1_nextFrame, body2_nextFrame)
-	# 	xDiff, yDiff = math.cos(body1To2Angle), math.sin(body1To2Angle)
-	# 	body1NearestPointToBody2 = [body1.pos[0] + body1.displayRad*xDiff, body1.pos[1] + body1.displayRad*yDiff]
-	# 	body2NearestPointToBody1 = [body2.pos[0] - body2.displayRad*xDiff, body2.pos[1] - body2.displayRad*yDiff] # cos(x + pi) == -cos(x)
-	# 	xDiff_nextFrame, yDiff_nextFrame = math.cos(body1To2Angle_nextFrame), math.sin(body1To2Angle_nextFrame)
-	# 	body1NearestPointToBody2_nextFrame = [body1_nextFrame[0] + body1.displayRad*xDiff_nextFrame, body1_nextFrame[1] + body1.displayRad*yDiff_nextFrame]
-	# 	body2NearestPointToBody1_nextFrame = [body2_nextFrame[0] - body2.displayRad*xDiff_nextFrame, body2_nextFrame[1] - body2.displayRad*yDiff_nextFrame]
-	# 	print(body1NearestPointToBody2)
-	# 	print(body2NearestPointToBody1)
-	# 	pygame.draw.line(screen, (255, 255, 0), body1NearestPointToBody2, body1NearestPointToBody2_nextFrame)
-	# 	pygame.draw.line(screen, (255, 0, 255), body2NearestPointToBody1, body2NearestPointToBody1_nextFrame)
-	# 	return Body.segmentsIntersect(body1NearestPointToBody2, body1NearestPointToBody2_nextFrame, body2NearestPointToBody1, body2NearestPointToBody1_nextFrame)
 
 	# A function that iterates over a list of bodies and handles collisions between them
 	# returns the new list of bodies (post-collisions)
@@ -193,10 +154,6 @@ class Body:
 				if dist <= body2.displayRad + body1.displayRad*0.5 and body2.mass >= body1.mass:
 					absorb = True
 					# swapping them so that body1 refers to the larger
-					temp = body2
-					body2 = body1
-					body1 = temp
-				if(body2.displayRad > body1.displayRad):
 					temp = body2
 					body2 = body1
 					body1 = temp
@@ -218,13 +175,11 @@ class Body:
 			if body1.released and body2.released:
 				attr = Body.findGravitationalAttraction(body1, body2)
 				b1ToB2Angle = Body.findRadianAngleFromCoords(body1.pos, body2.pos)
-				gVec1 = Body.findVectorFromMagnitudeAndAngle(attr, b1ToB2Angle)
-				gVec2 = Body.findVectorFromMagnitudeAndAngle(attr, b1ToB2Angle+math.pi)
-				body1.vec = Body.addVectors(body1.vec, gVec1)
-				body2.vec = Body.addVectors(body2.vec, gVec2)
-
-				body1.gravVecList.append(gVec1)
-				body2.gravVecList.append(gVec2)
+				dx_grav, dy_grav = attr*np.cos(b1ToB2Angle), attr*np.sin(b1ToB2Angle)
+				body1.vec = Body.addVectors(body1.vec, [dx_grav, dy_grav])
+				body2.vec = Body.addVectors(body2.vec, [-dx_grav, -dy_grav])
+				body1.gravVecList.append([dx_grav, dy_grav])
+				body2.gravVecList.append([-dx_grav, -dy_grav])
 
 	@staticmethod
 	def findCenterOfMass(lst):
@@ -270,4 +225,4 @@ class Body:
 			if len(self.trailList) > 0:
 				pygame.draw.lines(self.srf, Body.trailColor, False, self.trailList+[self.pos])
 		else:
-			self.trailList.clear() # saving space
+			self.trailList.clear() # saving spaces
