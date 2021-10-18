@@ -27,10 +27,7 @@ def enter():
 		int(numBodies_str.get()) >= 0 else randomNoMomentum_numBodies
 	root.destroy()
 def selectRadio():
-	if preset_int.get() == 1:
-		randomNoMomentum_entry.config(state = 'normal')
-	else:
-		randomNoMomentum_entry.config(state = 'disabled')
+	randomNoMomentum_entry.config(state = 'normal' if preset_int.get()==1 else 'disabled')
 
 vec_int = IntVar()
 grav_int = IntVar()
@@ -248,15 +245,6 @@ while not game_over:
 	if not backUp:
 		heldBody = bodies[-1]
 		newMass = heldBody.mass
-		# increasing and decreasing the mass of a held 'Body' with the up and down arrow keys
-		if pressed[pygame.K_UP]:
-			newMass = heldBody.mass + 1
-		elif pressed[pygame.K_DOWN]:
-			newVolume = (heldBody.mass-1)/Body.density
-			newRad = (3*newVolume/(4*math.pi))**(1/3)
-			# preventing the mass from becoming zero
-			if not type(newRad) == complex and not heldBody.mass == 1:
-				newMass = heldBody.mass-1
 		# allowing the user to type in a mass for a body while it is held
 		if numKeysUp and numberKeyIsPressed(pressed):
 			num = numberKeyPressed(pressed)
@@ -324,7 +312,7 @@ while not game_over:
 			rightArrowUp = True
 	else:
 		frame_count += 1
-		# moving the bodies
+		# moving the bodies 
 		for body in bodies:
 			body.update()
 
