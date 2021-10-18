@@ -6,13 +6,17 @@ import math
 import random
 from tkinter import *
 from Body import Body
+from Seed import Seed
 
 pygame.init()
 
 root = Tk()
 root.title("Orbit Preset")
 
+disabledColor, enabledColor = "#646464", "#000000"
+
 randomNoMomentum_numBodies = 120
+seedPreset = ""
 displayInfo = [False, False, False, False, False] # stores what should be drawn (vectors, gravity forces, etc.)
 presetVal = 0
 
@@ -20,14 +24,23 @@ def enter():
 	global displayInfo
 	global presetVal
 	global randomNoMomentum_numBodies
+	global seedPreset
+	# display settings
 	displayInfo = [bool(vec_int.get()), bool(grav_int.get()), bool(aggGrav_int.get()), \
 	bool(trail_int.get()), bool(centerOfMass_int.get())]
 	presetVal = preset_int.get()
+	# handling entries
 	randomNoMomentum_numBodies = numBodies_str.get() if len(numBodies_str.get()) > 0 and \
 		int(numBodies_str.get()) >= 0 else randomNoMomentum_numBodies
+	seedPreset = seed_str.get()
 	root.destroy()
 def selectRadio():
-	randomNoMomentum_entry.config(state = 'normal' if preset_int.get()==1 else 'disabled')
+	stateUpdate = 'normal' if preset_int.get()==1 else 'disabled'
+	textUpdate = enabledColor if preset_int.get()==1 else disabledColor
+	randomNoMomentum_entry.config(state = stateUpdate)
+	seed_entry.config(state = stateUpdate)
+	randomNoMomentum_label.config(fg = textUpdate)
+	seed_label.config(fg = textUpdate)
 
 vec_int = IntVar()
 grav_int = IntVar()
@@ -37,6 +50,7 @@ centerOfMass_int = IntVar()
 
 preset_int = IntVar()
 numBodies_str = StringVar()
+seed_str = StringVar()
 
 vec_check = Checkbutton(root, text = 'Draw vectors', variable = vec_int)
 grav_check = Checkbutton(root, text = 'Draw gravity', variable = grav_int)
@@ -51,9 +65,13 @@ oscellation_radio = Radiobutton(root, text = 'Oscellation', variable = preset_in
 
 randomNoMomentum_entry = Entry(root, textvariable = numBodies_str, state = 'disabled')
 numBodies_str.set(str(randomNoMomentum_numBodies))
+seed_entry = Entry(root, textvariable = seed_str, state = 'disabled')
 
 display_label = Label(root, text = 'Display Settings')
 presets_label = Label(root, text = 'Presets')
+
+randomNoMomentum_label = Label(root, text = 'Number of bodies', fg = disabledColor)
+seed_label = Label(root, text = 'Seed', fg = disabledColor)
 
 enter_button = Button(root, text = "Enter", command = enter, padx = 70, pady = 10, borderwidth = 4)
 
@@ -65,15 +83,18 @@ centerOfMass_check.grid(row = 5, column = 0, sticky = "W", padx = 40)
 
 none_radio.grid(row = 1, column = 1, sticky = "W", padx = 40)
 randomNoMomentum_radio.grid(row = 2, column = 1, sticky = "W", padx = 40)
-circularOrbit_radio.grid(row = 4, column = 1, sticky = "W", padx = 40)
-oscellation_radio.grid(row = 5, column = 1, sticky = "W", padx = 40)
+circularOrbit_radio.grid(row = 7, column = 1, sticky = "W", padx = 40)
+oscellation_radio.grid(row = 8, column = 1, sticky = "W", padx = 40)
 
-randomNoMomentum_entry.grid(row = 3, column = 1)
+randomNoMomentum_label.grid(row = 3, column = 1, sticky = "W", padx = 54)
+randomNoMomentum_entry.grid(row = 4, column = 1)
+seed_label.grid(row = 5, column = 1, sticky = "W", padx = 54)
+seed_entry.grid(row = 6, column = 1)
 
 display_label.grid(row = 0, column = 0)
 presets_label.grid(row = 0, column = 1)
 
-enter_button.grid(row = 6, column = 0, columnspan = 2)
+enter_button.grid(row = 9, column = 0, columnspan = 2)
 
 root.mainloop()
 
@@ -85,6 +106,9 @@ clock = pygame.time.Clock()
 
 fps = 60
 frame_count = 0
+
+seed = Seed(seedPreset)
+random.seed(seed.seed)
 
 game_font  = pygame.font.SysFont('calibri', 40, bold = True)
 frame_text_location = (10, 10)
