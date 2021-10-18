@@ -32,9 +32,13 @@ python3 gravity.py
 ```
 ## Controls
  * Move camera with WASD. 
- * Press the spacebar to reset to the begining. 
- * Hold tab and use foreward arrow key to go frame by frame. 
+ * Press the spacebar to revert to preset.
+ * Shift + spacebar to clear the screen 
+ * Hold tab to pause
+ * Tab + right arrow to progress frame by frame
  * Click to create a new body.
- * Click and drag to create a new body with mass. 
- * Click and release while holding shift to create a fixed body. 
+ * Click and drag to create a new body with velocity.
+ * While holding right click, use the number keys to specify a specific mass for the body. 
+ * Press enter to commit this new mass
+ * Shift + click to create a fixed body. 
  * Escape key to exit. 
