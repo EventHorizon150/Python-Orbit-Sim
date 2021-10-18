@@ -1,12 +1,13 @@
 # Nathaniel Morin
 # 8/22/2021
 
-import threading
+from concurrent.futures import ThreadPoolExecutor
 import pygame
 import math
 import random
 from tkinter import *
 from Body import Body
+
 from Seed import Seed
 
 pygame.init()
@@ -337,18 +338,12 @@ while not game_over:
 	else:
 		frame_count += 1
 		# moving the bodies 
-		jobs = []
-		# q = queue.Queue()
-		for body in bodies:
-			p = threading.Thread(target=body.update)
-			p.start()
-			jobs.append(p)
-		for job in jobs:
-			job.join()
-
+		with ThreadPoolExecutor() as executor:
+			for body in bodies:
+				p = executor.submit(body.update)
+			executor.shutdown(wait=True)
 		Body.checkForBodyCollision(bodies)
 		Body.applyGravity(bodies)
-
 		rightArrowUp = False
 
 	# drawing the balls
