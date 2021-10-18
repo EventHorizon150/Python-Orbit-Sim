@@ -1,6 +1,7 @@
 # Nathaniel Morin
 # 8/22/2021
 
+import threading
 import pygame
 import math
 import random
@@ -97,7 +98,6 @@ presets_label.grid(row = 0, column = 1)
 enter_button.grid(row = 9, column = 0, columnspan = 2)
 
 root.mainloop()
-
 # variables
 screenWidth = 800
 screenHeight = 800
@@ -337,8 +337,14 @@ while not game_over:
 	else:
 		frame_count += 1
 		# moving the bodies 
+		jobs = []
+		# q = queue.Queue()
 		for body in bodies:
-			body.update()
+			p = threading.Thread(target=body.update)
+			p.start()
+			jobs.append(p)
+		for job in jobs:
+			job.join()
 
 		Body.checkForBodyCollision(bodies)
 		Body.applyGravity(bodies)
