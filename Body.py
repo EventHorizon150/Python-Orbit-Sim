@@ -2,7 +2,6 @@
 # 8/22/2021
 
 import pygame
-import sys
 import math
 import numpy as np
 import itertools
@@ -31,7 +30,7 @@ class Body:
 	# What portion of the real magnitude of the gravity vectors are displayed
 	gravDisplayFactor = 1*10**-15
 	density = 5000 # kg/m^3
-	G = 6.67408 * 10**-11 # gravitational constant
+	G = 6.67408*10**-11 # gravitational constant
 	mpp = 1_000_000 # meters per pixel (1000 km)
 	spf = 1200 # seconds per frame (20 min)
 
