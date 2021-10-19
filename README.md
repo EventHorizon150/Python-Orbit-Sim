@@ -30,6 +30,21 @@ Linux:
 ```
 python3 gravity.py
 ```
+## Game Options
+
+Display settings:
+ * Draw vectors: Draws the speed and direction of the vector for each body onscreen. 
+ * Draw gravity: Draws the pulls of gravity for each body by each other object onscreen.
+ * Draw net grav: Draws the net pull of gravity for each object onscreen. 
+ * Draw trail: Draws a trail behind each object onscreen. 
+ * Draw center of mass: Draws the center of all mass that exists onscreen. 
+
+ Presets:
+ * None: Start with a blank screen for you to add their own bodies and stuff. 
+ * Random: Starts the number of bodies you select onscreen. Location is determined by the seed. Seeds can be reused for the same results. Leave it blank for a random seed. 
+ * Circular orbit: Starts 2 bodies onscreen, one with the mass of earth, and one with the velocity and mass of the moon. 
+ * Oscellation: It looks cool just take a look. 
+ 
 ## Controls
  * Move camera with WASD. 
  * Press the spacebar to revert to preset.
