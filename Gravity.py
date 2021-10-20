@@ -1,11 +1,13 @@
 # Nathaniel Morin
 # 8/22/2021
 
+from concurrent.futures import ThreadPoolExecutor
 import pygame
 import math
 import random
 from tkinter import *
 from Body import Body
+
 from Seed import Seed
 
 pygame.init()
@@ -97,7 +99,6 @@ presets_label.grid(row = 0, column = 1)
 enter_button.grid(row = 9, column = 0, columnspan = 2)
 
 root.mainloop()
-
 # variables
 screenWidth = 800
 screenHeight = 800
@@ -337,12 +338,12 @@ while not game_over:
 	else:
 		frame_count += 1
 		# moving the bodies 
-		for body in bodies:
-			body.update()
-
+		with ThreadPoolExecutor() as executor:
+			for body in bodies:
+				p = executor.submit(body.update)
+			executor.shutdown(wait=True)
 		Body.checkForBodyCollision(bodies)
 		Body.applyGravity(bodies)
-
 		rightArrowUp = False
 
 	# drawing the balls
