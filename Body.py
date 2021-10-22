@@ -150,7 +150,7 @@ class Body:
 				# true if body1 is bigger and they are colliding
 				absorb = dist <= body1.displayRad + body2.displayRad*Body.collisionDistanceFactor and body1.mass >= body2.mass
 				# if body2 is bigger and they are colliding
-				if dist <= body2.displayRad + body1.displayRad*0.5 and body2.mass >= body1.mass:
+				if dist <= body2.displayRad + body1.displayRad*Body.collisionDistanceFactor and body2.mass >= body1.mass:
 					absorb = True
 					# swapping them so that body1 refers to the larger
 					temp = body2
@@ -161,7 +161,7 @@ class Body:
 					body1.vec = Body.addVectors(body1.vec, body2.vec)
 					body1.setMass(body1.mass + body2.mass)
 					if body2 in lst:
-						lst.remove(body2)
+						lst.remove(body2)				
 
 	# function that iterates over a list of bodies and handles shifts to their vectors due to gravitational interactions
 	@staticmethod
