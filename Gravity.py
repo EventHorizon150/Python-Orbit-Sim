@@ -7,7 +7,11 @@ import random
 from tkinter import *
 from Body import Body
 from Seed import Seed
-
+import pyrebase
+import json
+firebaseConfig = json.load(open('firebaseConfig.json'))
+firebase = pyrebase.initialize_app(firebaseConfig)
+db = firebase.database()
 pygame.init()
 
 root = Tk()
@@ -69,7 +73,7 @@ seed_entry = Entry(root, textvariable = seed_str, state = 'disabled')
 
 display_label = Label(root, text = 'Display Settings')
 presets_label = Label(root, text = 'Presets')
-
+seed_text_location = (550, 10)
 randomNoMomentum_label = Label(root, text = 'Number of bodies', fg = disabledColor)
 seed_label = Label(root, text = 'Seed', fg = disabledColor)
 
@@ -133,7 +137,22 @@ background = pygame.Rect((0, 0), (screenWidth, screenHeight))
 background_color = pygame.Color(30, 30, 30)
 
 bodies = []
-
+maxEvalSeed, maxEval = "", 0
+secondEvalSeed, secondEval = "", 0
+thirdEvalSeed, thirdEval = "", 0
+def evaluateState(bodies):
+	maxBody = bodies[0]
+	for body in bodies:
+		if body.mass > maxBody.mass:
+			maxBody = body
+	value = 0
+	for body in bodies:
+		if body != maxBody:
+			dist = Body.findDisplayDistance(body.pos, maxBody.pos)
+			if(dist > 450):
+				continue
+			value += (2025**(-1))*dist**2-0.444*dist+100
+	return value
 # planet formation
 def generateRandomBodies(numBodies, massRange):
 	return [Body((random.randint(0, screenWidth), random.randint(0, screenHeight)),\
@@ -208,7 +227,7 @@ while not game_over:
 
 	pressed = pygame.key.get_pressed()
 
-	clock.tick(fps)
+	# clock.tick(fps)
 
 	# drawing the background
 	screen.fill(background_color)
@@ -353,10 +372,28 @@ while not game_over:
 	# multiplying Body.max_speed by 7.5 shows how fast a body would travel in 0.25 seconds as opposed to 0.033 seconds, as this is easier to see when dragging the line
 	if not backUp:
 		pygame.draw.line(screen, launch_line_info[0], launch_line_info[1], launch_line_info[2], launch_line_width)
-
+	if frame_count >= 500 and len(bodies) > 0:
+			evaluation = evaluateState(bodies)
+			db.child('seeds').child(seed.seed).child('score').set(evaluation)
+			db.child('seeds').child(seed.seed).child('seed').set(seed.raw)
+			if(db.child('highscore').child('score').get().val()<evaluation):
+				db.child('highscore').child('score').set(evaluation)
+				db.child('highscore').child('seed').set(seed.raw)
+			print(seed.raw)
+			seed = Seed(Seed.generateRandom())
+			if(seed.raw in db.child('seeds').shallow().get().val()):
+				seed = Seed(Seed.generateRandom())
+			bodies.clear()
+			random.seed(seed.seed)
+			bodies = generateRandomBodies(int(randomNoMomentum_numBodies), (8*10**22, 4*10**23))
+			frame_count = 0
 	frame_label_text = "Frame: {}".format(frame_count)
 	frame_label = game_font.render(frame_label_text, 1, WHITE)
 	screen.blit(frame_label, frame_text_location)
+
+	seed_label_text = "Seed: {}".format(seed.raw)
+	seed_label = game_font.render(seed_label_text, 1, WHITE)
+	screen.blit(seed_label, seed_text_location)
 
 	pygame.display.update()
 	pygame.display.flip()

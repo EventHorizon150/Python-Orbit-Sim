@@ -1,0 +1,9 @@
+{
+    "apiKey": "AIzaSyC2tRFAgjRVcsgDUSKdOptKQ_Aiw2QGKxQ",
+    "authDomain": "gravity-sim-seeds.firebaseapp.com",
+    "databaseURL": "https://gravity-sim-seeds-default-rtdb.firebaseio.com",
+    "projectId": "gravity-sim-seeds",
+    "storageBucket": "gravity-sim-seeds.appspot.com",
+    "messagingSenderId": "738256469892",
+    "appId": "1:738256469892:web:fb99a5060db0c4da67a7d1"
+  }
