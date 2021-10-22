@@ -4,6 +4,7 @@
 import pygame
 import math
 import random
+import itertools
 from tkinter import *
 from Body import Body
 from Seed import Seed
@@ -32,7 +33,7 @@ def enter():
 	# handling entries
 	randomNoMomentum_numBodies = numBodies_str.get() if len(numBodies_str.get()) > 0 and \
 		int(numBodies_str.get()) >= 0 else randomNoMomentum_numBodies
-	seedPreset = seed_str.get()
+	seedPreset = seed_str.get() if len(seed_str.get()) <= 6 else seed_str.get()[:6]
 	root.destroy()
 def selectRadio():
 	stateUpdate = 'normal' if preset_int.get()==1 else 'disabled'
@@ -114,6 +115,7 @@ game_font  = pygame.font.SysFont('calibri', 40, bold = True)
 frame_text_location = (10, 10)
 mass_text_location = (10, 50)
 typedNum_text_location = (10, 90)
+seed_text_location = (550, 10)
 
 backUp = True
 numKeysUp = True
@@ -133,6 +135,23 @@ background = pygame.Rect((0, 0), (screenWidth, screenHeight))
 background_color = pygame.Color(30, 30, 30)
 
 bodies = []
+
+# maxEvalSeed, maxEval = "", 0
+# secondEvalSeed, secondEval = "", 0
+# thirdEvalSeed, thirdEval = "", 0
+# def evaluateState(bodies):
+# 	maxBody = bodies[0]
+# 	for body in bodies:
+# 		if body.mass > maxBody.mass:
+# 			maxBody = body
+# 	value = 0
+# 	for body in bodies:
+# 		if body != maxBody:
+# 			dist = Body.findDisplayDistance(body.pos, maxBody.pos)
+# 			if(dist > 450):
+# 				continue
+# 			value += (2025**(-1))*dist**2-0.444*dist+100
+# 	return value
 
 # planet formation
 def generateRandomBodies(numBodies, massRange):
@@ -350,13 +369,45 @@ while not game_over:
 		b.draw(drawVec = displayInfo[0], drawGrav = displayInfo[1], drawAgg = displayInfo[2], drawTrail = displayInfo[3])	
 
 	# drawing the magnitude indicator line
-	# multiplying Body.max_speed by 7.5 shows how fast a body would travel in 0.25 seconds as opposed to 0.033 seconds, as this is easier to see when dragging the line
+	# multiplying Body.max_speed by 7.5 shows how fast a body would travel in 0.25 seconds as opposed to 1 frame, as this is easier to see when dragging the line
 	if not backUp:
 		pygame.draw.line(screen, launch_line_info[0], launch_line_info[1], launch_line_info[2], launch_line_width)
+
+	# if frame_count >= 500 and len(bodies) > 0:
+	# 	evaluation = evaluateState(bodies)
+	# 	print(evaluation)
+	# 	if evaluation > maxEval:
+	# 		thirdEval = secondEval
+	# 		thirdEvalSeed = secondEvalSeed
+	# 		secondEval = maxEval
+	# 		secondEvalSeed = maxEvalSeed
+	# 		maxEval = evaluation
+	# 		maxEvalSeed = seed.raw
+	# 	elif evaluation > secondEval:
+	# 		thirdEval = secondEval
+	# 		thirdEvalSeed = secondEvalSeed
+	# 		secondEval = evaluation 
+	# 		secondEvalSeed = seed.raw
+	# 	elif evaluation > thirdEval:
+	# 		thirdEval = evaluation
+	# 		thirdEvalSeed = seed.raw
+	# 	print(seed.raw)
+	# 	seed = Seed(Seed.generateRandom())
+	# 	print("Max: {} {}".format(maxEvalSeed, maxEval))
+	# 	print("2nd: {} {}".format(secondEvalSeed, secondEval))
+	# 	print("3rd: {} {}\n***".format(thirdEvalSeed, thirdEval))
+	# 	bodies.clear()
+	# 	random.seed(seed.seed)
+	# 	bodies = generateRandomBodies(int(randomNoMomentum_numBodies), (8*10**22, 4*10**23))
+	# 	frame_count = 0
 
 	frame_label_text = "Frame: {}".format(frame_count)
 	frame_label = game_font.render(frame_label_text, 1, WHITE)
 	screen.blit(frame_label, frame_text_location)
+
+	seed_label_text = "Seed: {}".format(seed.raw)
+	seed_label = game_font.render(seed_label_text, 1, WHITE)
+	screen.blit(seed_label, seed_text_location)
 
 	pygame.display.update()
 	pygame.display.flip()
