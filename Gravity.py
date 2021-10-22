@@ -377,11 +377,15 @@ while not game_over:
 			db.child('seeds').child(seed.seed).child('score').set(evaluation)
 			db.child('seeds').child(seed.seed).child('seed').set(seed.raw)
 			if(db.child('highscore').child('score').get().val()<evaluation):
+				print('New Highscore of ' + str(evaluation) + " with seed " + seed.raw)
 				db.child('highscore').child('score').set(evaluation)
 				db.child('highscore').child('seed').set(seed.raw)
 			print(seed.raw)
 			seed = Seed(Seed.generateRandom())
-			if(seed.raw in db.child('seeds').shallow().get().val()):
+			seeds = db.child('seeds').shallow().get().val()
+			print(len(seeds))
+			print(int(evaluation))
+			if(seed.raw in seeds):
 				seed = Seed(Seed.generateRandom())
 			bodies.clear()
 			random.seed(seed.seed)
