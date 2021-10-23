@@ -382,11 +382,11 @@ while not game_over:
 				db.child('highscore').child('seed').set(seed.raw)
 			print(seed.raw)
 			seed = Seed(Seed.generateRandom())
-			seeds = db.child('seeds').shallow().get().val()
-			print(len(seeds))
+			# seeds = db.child('seeds').shallow().get().val()
+			# print(len(seeds))
 			print(int(evaluation))
-			if(seed.raw in seeds):
-				seed = Seed(Seed.generateRandom())
+			# if(seed.raw in seeds):
+				# seed = Seed(Seed.generateRandom())
 			bodies.clear()
 			random.seed(seed.seed)
 			bodies = generateRandomBodies(int(randomNoMomentum_numBodies), (8*10**22, 4*10**23))

@@ -150,7 +150,7 @@ class Body:
 				# true if body1 is bigger and they are colliding
 				absorb = dist <= body1.displayRad + body2.displayRad*Body.collisionDistanceFactor and body1.mass >= body2.mass
 				# if body2 is bigger and they are colliding
-				if dist <= body2.displayRad + body1.displayRad*0.5 and body2.mass >= body1.mass:
+				if dist <= body2.displayRad + body1.displayRad*Body.collisionDistanceFactor and body2.mass >= body1.mass:
 					absorb = True
 					# swapping them so that body1 refers to the larger
 					temp = body2
